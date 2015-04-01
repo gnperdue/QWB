@@ -19,6 +19,7 @@ fi
 FILEBASE="rusers"
 CHATTY="false"
 NUSERS=10
+HELPFLAG=0
 
 help()
 {
@@ -67,6 +68,11 @@ do
     esac
 done
 
+if [[ $HELPFLAG == 1 ]]; then
+    help
+    exit 0
+fi
+
 
 # Get a set of random users
 curl -s "http://api.randomuser.me/?results=${NUSERS}" > ${FILEBASE}.json
@@ -100,3 +106,5 @@ fi
 # Make a head file and a body file
 head -n 1 ${FILEBASE}_filtered_merged.csv > ${FILEBASE}_filtered_merged_header.csv
 cat ${FILEBASE}_filtered_merged.csv | header -d -n 1 > ${FILEBASE}_filtered_merged_body.csv
+
+exit 0
