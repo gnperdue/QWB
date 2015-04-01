@@ -15,6 +15,17 @@ if [[ $CSVSQL == "" ]]; then
     echo "You must have csvsql installed to use this script."
     exit 1
 fi
+JSON2CSV=`which json2csv`
+if [[ $JSON2CSV == "" ]]; then
+    echo "You must have json2csv installed to use this script."
+    exit 1
+fi
+HEADER=`which header`
+if [[ $HEADER == "" ]]; then
+    echo "You need J. Janssens' `header` program to use this script."
+    echo "  https://github.com/jeroenjanssens/data-science-at-the-command-line"
+    exit 1
+fi
 
 FILEBASE="rusers"
 CHATTY="false"
@@ -29,6 +40,19 @@ Usage: ./get_random_users.sh   -<f>|--<flag> arg
                                -f / --filebase   : output file "base name"
                                -n / --nusers     : number of users to generate
                                -c / --chatty     : show your work...
+
+Get a set of random users from http://api.randomuser.me and store the
+output in "FILEBASE".json. Then, filter the output down to only a handful
+of fields (we don't care about many of the default fields included) and
+store this output in "FILEBASE"_filtered.json. You need to have the `jq`
+program installed to do this. Next, turn the JSON into flat csv with
+`json2csv` and store the output in "FILEBASE"_filtered.csv. This is actually
+the output you probably want.
+
+Additionally use `csvsql` to merge a couple of the fields and produce a
+new file, "FILEBASE"_filtered_merged.csv. Then take that CSV and produce
+files containing the header and body of the merged CSV.
+
 EOF
 }
 
@@ -73,6 +97,9 @@ if [[ $HELPFLAG == 1 ]]; then
     exit 0
 fi
 
+#
+# Get to work...
+#
 
 # Get a set of random users
 curl -s "http://api.randomuser.me/?results=${NUSERS}" > ${FILEBASE}.json
