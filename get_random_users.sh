@@ -101,8 +101,12 @@ fi
 # Get to work...
 #
 
-# Get a set of random users
-curl -s "http://api.randomuser.me/?results=${NUSERS}" > ${FILEBASE}.json
+GETNEWUSERS=yes
+
+if [[ $GETNEWUSERS == "yes" ]]; then
+    # Get a set of random users
+    curl -s "http://api.randomuser.me/?results=${NUSERS}" > ${FILEBASE}.json
+fi
 
 # Look at what we got
 if [[ $CHATTY == "true" ]]; then
@@ -120,18 +124,19 @@ if [[ $CHATTY == "true" ]]; then
     < ${FILEBASE}_filtered.csv csvlook
 fi
 
-# Merge some columns with csvsql
-< ${FILEBASE}_filtered.csv csvsql \
-  --query "SELECT first || ' ' || last AS name, sex, email, street, city, state, zipcode FROM stdin" \
-  > ${FILEBASE}_filtered_merged.csv
-
-# Look at what we got
+# Transform the csv into an sql insert script - need to create the db first
+# This doesn't work as well as I would like - it only makes a `CREATE TABLE`
+# and it isn't obvious how to add PRIMARY KEYs, etc. - need to do this in
+# a second step anyway. Therefore, only look at the "head" of file.
+# TODO - allow the user to specify the SQL dialect for insert statements
 if [[ $CHATTY == "true" ]]; then
-    csvlook ${FILEBASE}_filtered_merged.csv
+    echo "Making SQL statements..."
 fi
+< ${FILEBASE}_filtered.csv head | csvsql -i mysql --table users > \
+                                         ${FILEBASE}_filtered.sql
 
 # Make a head file and a body file
-head -n 1 ${FILEBASE}_filtered_merged.csv > ${FILEBASE}_filtered_merged_header.csv
-cat ${FILEBASE}_filtered_merged.csv | header -d -n 1 > ${FILEBASE}_filtered_merged_body.csv
+head -n 1 ${FILEBASE}_filtered.csv > ${FILEBASE}_filtered_header.csv
+cat ${FILEBASE}_filtered.csv | header -d -n 1 > ${FILEBASE}_filtered_body.csv
 
 exit 0
